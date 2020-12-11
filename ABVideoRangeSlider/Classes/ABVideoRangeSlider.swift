@@ -24,9 +24,6 @@ public class ABVideoRangeSlider: UIView {
     var progressIndicator   = ABProgressIndicator()
     var draggableView       = UIView()
     
-    public var startTimeView       = ABTimeView()
-    public var endTimeView         = ABTimeView()
-    
     let thumbnailsManager   = ABThumbnailsManager()
     var duration: Float64   = 0.0
     var videoURL            = URL(fileURLWithPath: "")
@@ -134,16 +131,6 @@ public class ABVideoRangeSlider: UIView {
         self.draggableView.backgroundColor = .clear
         self.addSubview(draggableView)
         self.sendSubviewToBack(draggableView)
-        
-        // Setup time labels
-        
-        startTimeView = ABTimeView(size: CGSize(width: 60, height: 30), position: 1)
-        startTimeView.layer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
-        self.addSubview(startTimeView)
-        
-        endTimeView = ABTimeView(size: CGSize(width: 60, height: 30), position: 1)
-        endTimeView.layer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
-        self.addSubview(endTimeView)
     }
 
     public override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
@@ -182,11 +169,6 @@ public class ABVideoRangeSlider: UIView {
     public func setBorderImage(image: UIImage){
         self.topLine.imageView.image = image
         self.bottomLine.imageView.image = image
-    }
-    
-    public func setTimeView(view: ABTimeView){
-        self.startTimeView = view
-        self.endTimeView = view
     }
     
     public func setTimeViewPosition(position: ABTimeViewPosition){
@@ -449,9 +431,6 @@ public class ABVideoRangeSlider: UIView {
     
     override public func layoutSubviews() {
         super.layoutSubviews()
-
-        startTimeView.timeLabel.text = self.secondsToFormattedString(totalSeconds: secondsFromValue(value: self.startPercentage))
-        endTimeView.timeLabel.text = self.secondsToFormattedString(totalSeconds: secondsFromValue(value: self.endPercentage))
         
         let startPosition = positionFromValue(value: self.startPercentage)
         let endPosition = positionFromValue(value: self.endPercentage)
@@ -475,10 +454,6 @@ public class ABVideoRangeSlider: UIView {
                                   y: self.frame.size.height,
                                   width: endIndicator.frame.origin.x - startIndicator.frame.origin.x - endIndicator.frame.size.width,
                                   height: bottomBorderHeight)
-        
-        // Update time view
-        startTimeView.center = CGPoint(x: startIndicator.center.x, y: startTimeView.center.y)
-        endTimeView.center = CGPoint(x: endIndicator.center.x, y: endTimeView.center.y)
     }
 
     
