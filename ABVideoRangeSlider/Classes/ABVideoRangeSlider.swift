@@ -210,15 +210,10 @@ public class ABVideoRangeSlider: UIView {
     public func updateThumbnails(){
         if !isUpdatingThumbnails{
             self.isUpdatingThumbnails = true
-            let backgroundQueue = DispatchQueue(label: "com.app.queue",
-                                                qos: .background,
-                                                target: nil)
-            backgroundQueue.async {
-                self.thumbnailsManager.updateThumbnails(view: self,
-                                                        videoURL: self.videoURL,
-                                                        duration: self.duration)
-                self.isUpdatingThumbnails = false
-            }
+            self.thumbnailsManager.updateThumbnails(view: self,
+                                                    videoURL: self.videoURL,
+                                                    duration: self.duration)
+            self.isUpdatingThumbnails = false
         }
     }
     

@@ -50,6 +50,7 @@ class ABThumbnailsManager: NSObject {
     private func thumbnailCount(inView: UIView) -> Int{
         let num = Double(inView.frame.size.width) / Double(inView.frame.size.height)
         return Int(ceil(num))
+
     }
     
     func updateThumbnails(view: UIView, videoURL: URL, duration: Float64) -> [UIImageView]{
