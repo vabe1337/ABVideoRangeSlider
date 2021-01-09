@@ -21,7 +21,7 @@ class ABEndIndicator: UIView {
         
         imageView.frame = self.bounds
         imageView.image = image
-        imageView.contentMode = .scaleAspectFit
+        imageView.contentMode = .scaleAspectFill
         self.addSubview(imageView)
     }
     

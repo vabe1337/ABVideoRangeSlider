@@ -16,9 +16,12 @@ class ABProgressIndicator: UIView {
         super.init(frame: frame)
         
         let bundle = Bundle(for: ABStartIndicator.self)
-        let image = UIImage(named: "ProgressIndicator", in: bundle, compatibleWith: nil)
+//        let image = UIImage(named: "ProgressIndicator", in: bundle, compatibleWith: nil)
         imageView.frame = self.bounds
-        imageView.image = image
+//        imageView.image = image
+        imageView.layer.borderWidth = 2
+        imageView.layer.borderColor = UIColor.white.cgColor
+        imageView.clipsToBounds = true
         imageView.contentMode = .scaleAspectFit
         self.addSubview(imageView)
     }

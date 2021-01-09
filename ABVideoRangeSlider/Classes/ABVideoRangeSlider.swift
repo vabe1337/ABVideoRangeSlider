@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import AVKit
 
 public protocol ABVideoRangeSliderDelegate {
     func didChangeValue(videoRangeSlider: ABVideoRangeSlider, startTime: Float64, endTime: Float64)
@@ -28,7 +29,7 @@ public class ABVideoRangeSlider: UIView {
     var duration: Float64   = 0.0
     var videoURL            = URL(fileURLWithPath: "")
     
-    var progressPercentage: CGFloat = 0         // Represented in percentage
+    var progressPercentage: CGFloat = 5         // Represented in percentage
     var startPercentage: CGFloat    = 0         // Represented in percentage
     var endPercentage: CGFloat      = 100       // Represented in percentage
     
@@ -71,7 +72,7 @@ public class ABVideoRangeSlider: UIView {
         
         startIndicator = ABStartIndicator(frame: CGRect(x: 0,
                                                         y: -topBorderHeight,
-                                                        width: 20,
+                                                        width: indicatorWidth,
                                                         height: self.frame.size.height + bottomBorderHeight + topBorderHeight))
         startIndicator.layer.anchorPoint = CGPoint(x: 1, y: 0.5)
         startIndicator.addGestureRecognizer(startDrag)
@@ -115,10 +116,12 @@ public class ABVideoRangeSlider: UIView {
         let progressDrag = UIPanGestureRecognizer(target:self,
                                                   action: #selector(progressDragged(recognizer:)))
         
-        progressIndicator = ABProgressIndicator(frame: CGRect(x: 0,
+        progressIndicator = ABProgressIndicator(frame: CGRect(x: 0.0,
                                                               y: -topBorderHeight,
-                                                              width: 10,
+                                                              width: 40,
                                                               height: self.frame.size.height + bottomBorderHeight + topBorderHeight))
+        progressIndicator.layer.cornerRadius = 3.0
+        progressIndicator.clipsToBounds = true
         progressIndicator.addGestureRecognizer(progressDrag)
         self.addSubview(progressIndicator)
         
@@ -187,6 +190,7 @@ public class ABVideoRangeSlider: UIView {
         self.videoURL = videoURL
         self.superview?.layoutSubviews()
         self.updateThumbnails()
+        self.updateIndicatorImage(url: videoURL, position: .zero)
     }
     
     public func updateThumbnails(){
@@ -232,8 +236,10 @@ public class ABVideoRangeSlider: UIView {
             position = self.frame.size.width
         }
         
-        if progressPosition < position{
-            progressPosition = position
+        let halfOfPogressIndicatorWidth = progressIndicator.bounds.width / 2
+        
+        if progressPosition < position + halfOfPogressIndicatorWidth{
+            progressPosition = position + halfOfPogressIndicatorWidth
         }
         
         let positionLimit = positionFromValue(value: self.endPercentage - valueFromSeconds(seconds: minSpace))
@@ -241,8 +247,8 @@ public class ABVideoRangeSlider: UIView {
         if Float(self.duration) < self.minSpace {
             position = 0
         }else{
-            if position > positionLimit {
-                position = positionLimit
+            if position > positionLimit - 40 {
+                position = positionLimit - 40
             }
         }
         
@@ -263,11 +269,11 @@ public class ABVideoRangeSlider: UIView {
         
         let startSeconds = secondsFromValue(value: startPercentage)
         let endSeconds = secondsFromValue(value: endPercentage)
-        
         self.delegate?.didChangeValue(videoRangeSlider: self, startTime: startSeconds, endTime: endSeconds)
     
         if self.progressPercentage != progressPercentage{
             let progressSeconds = secondsFromValue(value: progressPercentage)
+            updateIndicatorImage(url: videoURL, position: progressSeconds)
             self.delegate?.indicatorDidChangePosition(videoRangeSlider: self, position: progressSeconds)
         }
         
@@ -277,6 +283,31 @@ public class ABVideoRangeSlider: UIView {
         layoutSubviews()
     }
     
+    static func thumbnailImage(videoURL: URL?, time: Double = .zero) -> UIImage? {
+        if let videoURL = videoURL {
+            let asset = AVURLAsset(url: videoURL)
+            let assetIG = AVAssetImageGenerator(asset: asset)
+            assetIG.appliesPreferredTrackTransform = true
+            assetIG.apertureMode = AVAssetImageGenerator.ApertureMode.encodedPixels
+            
+            let cmTime = CMTime(seconds: time, preferredTimescale: 1)
+            let thumbnailImageRef: CGImage
+            do {
+                thumbnailImageRef = try assetIG.copyCGImage(at: cmTime, actualTime: nil)
+            } catch let error {
+                return nil
+            }
+            
+            return UIImage(cgImage: thumbnailImageRef)
+        }
+        return nil
+    }
+    
+    private func updateIndicatorImage(url: URL, position: Float64) {
+        if let image = ABVideoRangeSlider.thumbnailImage(videoURL: url, time: Double(position)) {
+            setProgressIndicatorImage(image: image)
+        }
+    }
     
     @objc func endDragged(recognizer: UIPanGestureRecognizer){
         let translation = recognizer.translation(in: self)
@@ -293,8 +324,10 @@ public class ABVideoRangeSlider: UIView {
             position = self.frame.size.width
         }
         
-        if progressPosition > position{
-            progressPosition = position
+        let halfOfPogressIndicatorWidth = progressIndicator.bounds.width / 2
+        
+        if progressPosition > position - halfOfPogressIndicatorWidth {
+            progressPosition = position - halfOfPogressIndicatorWidth
         }
         
         let positionLimit = positionFromValue(value: valueFromSeconds(seconds: minSpace) + self.startPercentage)
@@ -302,14 +335,14 @@ public class ABVideoRangeSlider: UIView {
         if Float(self.duration) < self.minSpace {
             position = self.frame.size.width
         }else{
-            if position < positionLimit {
-                position = positionLimit
+            if position < positionLimit + 40 {
+                position = positionLimit + 40
             }
         }
         
         let positionLimitMax = positionFromValue(value: self.startPercentage + valueFromSeconds(seconds: maxSpace))
         if Float(self.duration) > self.maxSpace && self.maxSpace > 0{
-            if position > positionLimitMax{
+            if position > positionLimitMax {
                 position = positionLimitMax
             }
         }
@@ -328,7 +361,8 @@ public class ABVideoRangeSlider: UIView {
         
         if self.progressPercentage != progressPercentage{
             let progressSeconds = secondsFromValue(value: progressPercentage)
-            self.delegate? .indicatorDidChangePosition(videoRangeSlider: self, position: progressSeconds)
+            updateIndicatorImage(url: videoURL, position: progressSeconds)
+            self.delegate?.indicatorDidChangePosition(videoRangeSlider: self, position: progressSeconds)
         }
         
         self.endPercentage = percentage
@@ -340,8 +374,8 @@ public class ABVideoRangeSlider: UIView {
     @objc func progressDragged(recognizer: UIPanGestureRecognizer){
         let translation = recognizer.translation(in: self)
         
-        let positionLimitStart  = positionFromValue(value: self.startPercentage)
-        let positionLimitEnd    = positionFromValue(value: self.endPercentage)
+        let positionLimitStart  = positionFromValue(value: self.startPercentage) + startIndicator.bounds.width
+        let positionLimitEnd    = positionFromValue(value: self.endPercentage) - endIndicator.bounds.width
         
         var position = positionFromValue(value: self.progressPercentage)
         position = position + translation.x
@@ -362,7 +396,11 @@ public class ABVideoRangeSlider: UIView {
         
         let progressSeconds = secondsFromValue(value: progressPercentage)
         
+        updateIndicatorImage(url: videoURL, position: progressSeconds)
+        
         self.delegate?.indicatorDidChangePosition(videoRangeSlider: self, position: progressSeconds)
+        
+        
         
         self.progressPercentage = percentage
         
@@ -409,7 +447,8 @@ public class ABVideoRangeSlider: UIView {
 
         if self.progressPercentage != progressPercentage{
             let progressSeconds = secondsFromValue(value: progressPercentage)
-            self.delegate? .indicatorDidChangePosition(videoRangeSlider: self, position: progressSeconds)
+            updateIndicatorImage(url: videoURL, position: progressSeconds)
+            self.delegate?.indicatorDidChangePosition(videoRangeSlider: self, position: progressSeconds)
         }
 
         self.startPercentage = startPercentage
